@@ -1,4 +1,7 @@
 // Zoom re-arranging shader in .frag format for Isadora
+// Written by Richard Williamson (richard@theatre.support) and Ash Green (ashley@ashley-green.com)
+// https://github.com/LiminalET/ZoomOSC-Shader/
+// feel free to edit and adapt but please let us know what you do!
 // Converted from ISF via the isadora tool
 // ISADORA_INT_PARAM_ONOFF(dispInputArea, [ut>, 0, "For testing - show the entire input image")
 // ISADORA_INT_PARAM_ONOFF(dispCellArea, &s]F, 0, "For testing - overlay the specified cell crop")
@@ -13,7 +16,6 @@
 // ISADORA_FLOAT_PARAM(userMasterScale_y, wn+5, 0, 100, 100, "The height of the input image to capture")
 // ISADORA_FLOAT_PARAM(userMasterOffset_x, ECde, -100, 100, 0, "The x offset of the input image to capture")
 // ISADORA_FLOAT_PARAM(userMasterOffset_y, veuD, -100, 100, 0, "The y offset of the input image to capture")
-// ISADORA_FLOAT_PARAM(testF, YH7S, -1000000, +1000000, 0, "No help available.")
 
 #define userMasterScale vec2(userMasterScale_x,userMasterScale_y)
 #define userMasterOffset vec2(userMasterOffset_x,userMasterOffset_y)
@@ -32,7 +34,6 @@ uniform float userMasterScale_x;
 uniform float userMasterScale_y;
 uniform float userMasterOffset_x;
 uniform float userMasterOffset_y;
-uniform float testF;
 uniform vec2 resolution_tex0;
 uniform vec2 resolution;
 
@@ -66,45 +67,13 @@ void main()	{
 
     float numberOfInputGridSegments=inputGridCount.x*inputGridCount.y;
 
-    //first work on in pixel size
-    //check that cells are 16:9
-    //find the smaller of the two bounds
-    
-//    if ((((sizeOfInputRectCell.x) / 16.0) * 9.0) > (((sizeOfInputRectCell.y) / 9.0) * 16.0))
-//    {
-//        //y is bigger, use x
-//        sizeOfInputRectCell.y = (((sizeOfInputRectCell.x) / 16.0) * 9.0);
-//    } else
-//    {  //x is bigger, use y
-//        sizeOfInputRectCell.x = ((sizeOfInputRectCell.y) / 9.0) * 16.0;
-//
-//    }
-    
-    //now convert to relaitive size
-//    float inputHeightAspect = (resolution.y * masterScale.y) / (resolution.x * masterScale.x);
-//    vec2 sizeOfInputRectCell = (masterScale / inputGridCount);
-//
-//    //sizeOfInputRectCell.y = sizeOfInputRectCell.x * (inputHeightAspect);
-//
-//    if ((sizeOfInputRectCell.x * inputGridCount.x) * (9.0 / 16.0) > masterScale.y)
-//    {
-//        //too wide for available height, shrink.
-//        float factor = masterScale.y / ((sizeOfInputRectCell.x * inputGridCount.x) * (9.0 / 16.0));
-//        factor = testF;
-//        sizeOfInputRectCell.x = factor;
-//    } else if ((sizeOfInputRectCell.y * inputGridCount.y) * (16.0 / 9.0) > masterScale.x)
-//    {
-//        float h = (sizeOfInputRectCell.y / 16.0) * 9.0;
-//        //factor = testF;
-//        sizeOfInputRectCell.y = h;
-//    }
+
     
     //convert to pixel sizes to do the maths
     vec2 sizeOfInputArea = resolution_tex0 * masterScale;
 
     vec2 sizeOfInputRectCell = (sizeOfInputArea / inputGridCount);
        
-       //sizeOfInputRectCell.y = sizeOfInputRectCell.x * (inputHeightAspect);
     
     vec2 innerOffset = vec2(0.0, 0.0);
        
@@ -154,7 +123,6 @@ void main()	{
         } else if (currentCell.y == 0.0) //bottom row, 
         {
             //width of the grid + 2x height of the grid
-            //cellToDrawIndex = int ((outputGridCount.x + ((outputGridCount.y - 2.0) * 2.0) + currentCell.x)) ;
             //draw bottom row second after top row
             cellToDrawIndex = int ((outputGridCount.x  + currentCell.x)) ;
 
@@ -281,10 +249,6 @@ void main()	{
 
 
 
-
-//TESTS
-// if(gl_TexCoord[0].xy.x>sizeOfInputRect.x+inputAreaBL.x&&gl_TexCoord[0].xy.y>sizeOfInputRect.y+inputAreaBL.y)
-// gl_FragColor = vec4(1.0,0.0,0.0,1.0);
 
 }
 
