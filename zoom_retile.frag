@@ -150,7 +150,7 @@ void main()	{
             }
 	} else {
 	    //not border view, so draw the cell we've been sent
-	    cellToDrawIndex = int(currentCell.x) + int(((outputGridCount.y - currentCell.y - 1.0) * inputGridCount.x));//(int(inputGridCount.x) * int(inputGridCount.y - currentCell.y)) + int(inputGridCount.x - currentCell.x /*- 1.0*/);
+	    cellToDrawIndex = int(currentCell.x) + int(((outputGridCount.y - currentCell.y - 1.0) *outputGridCount.x));//(int(inputGridCount.x) * int(inputGridCount.y - currentCell.y)) + int(inputGridCount.x - currentCell.x /*- 1.0*/);
 	}
         //Exclude the cell index specified(Adds 1 to the cell index)
         if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell)
@@ -159,10 +159,10 @@ void main()	{
         }
         if (outputOffset > 0)
         {
-        	cellToDrawIndex += outputOffset;
+        	cellToDrawIndex -= outputOffset;
         } 
 
-        if ((cellToDrawIndex > int(numberOfInputGridSegments - 1.0)) || cellToDrawIndex < outputOffset)
+        if ((cellToDrawIndex > int(galleryCount)) || cellToDrawIndex < 0) //int(numberOfInputGridSegments/* - 1.0*/)) || cellToDrawIndex < outputOffset)
         { //don't have enough cells to draw..
             gl_FragColor = vec4(0.0,0.0,0.0,0.0);
         } else
