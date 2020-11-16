@@ -8,7 +8,7 @@
 // ISADORA_INT_PARAM(numCallerRows, Pbrd, 0, 10, 0, "The number of rows in the zoom gallery (leave at 0 to automatically calculate)")
 // ISADORA_INT_PARAM(numCallerColumns, f]c], 0, 10, 0, "The number of cols in the gallery (leave at 0 to automatically calculate)")
 // ISADORA_FLOAT_PARAM(galleryCount, x#+O, 0, 50, 0, "The number of video cells in the gallery")
-// ISADORA_INT_PARAM_ONOFF(borderView, [ut>, 0, "Use border gallery")
+// ISADORA_INT_PARAM_ONOFF(borderView, [ux>, 0, "Use border gallery")
 // ISADORA_INT_PARAM(outputGridWidth, -i-#, 0, 9, 8, "How many columns in the output grid")
 // ISADORA_INT_PARAM(outputGridHeight, q*1T, 0, 9, 4, "How many rows in the output grid")
 // ISADORA_FLOAT_PARAM(specifyCell, $~#v, -1, 50, -1, "Specify a specific cell to capture (-1 to capture all)")
@@ -148,7 +148,7 @@ void main()	{
             }
 	} else {
 	    //not border view, so draw the cell we've been sent
-	    cellToDrawIndex = (numCallerRows * currentCell.y) + currentCell.x;
+	    cellToDrawIndex = (int(numCallerRows) * int(currentCell.y)) + int(currentCell.x);
 	}
         //Exclude the cell index specified(Adds 1 to the cell index)
         if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell){
