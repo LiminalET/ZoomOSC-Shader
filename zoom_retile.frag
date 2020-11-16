@@ -9,6 +9,7 @@
 // ISADORA_INT_PARAM(numCallerColumns, f]c], 0, 10, 0, "The number of cols in the gallery (leave at 0 to automatically calculate)")
 // ISADORA_FLOAT_PARAM(galleryCount, x#+O, 0, 50, 0, "The number of video cells in the gallery")
 // ISADORA_INT_PARAM_ONOFF(borderView, [ux>, 0, "Use border gallery")
+// ISADORA_INT_PARAM(outputOffset,-j7g, 0, 100, 0, "Output cell offset")
 // ISADORA_INT_PARAM(outputGridWidth, -i-#, 0, 9, 8, "How many columns in the output grid")
 // ISADORA_INT_PARAM(outputGridHeight, q*1T, 0, 9, 4, "How many rows in the output grid")
 // ISADORA_FLOAT_PARAM(specifyCell, $~#v, -1, 50, -1, "Specify a specific cell to capture (-1 to capture all)")
@@ -28,6 +29,7 @@ uniform bool borderView;
 uniform int numCallerRows;
 uniform int numCallerColumns;
 uniform float galleryCount;
+uniform int outputOffset;
 uniform int outputGridWidth;
 uniform int outputGridHeight;
 uniform float specifyCell;
@@ -154,8 +156,12 @@ void main()	{
         if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell){
             cellToDrawIndex += 1;
         }
+        if (outputOffset > 0)
+        {
+        	cellToDrawIndex -= outputOffset;
+        } 
 
-        if (cellToDrawIndex > int(numberOfInputGridSegments - 1.0))
+        if ((cellToDrawIndex > int(numberOfInputGridSegments - 1.0)) || cellToDrawIndex < 0)
         { //don't have enough cells to draw..
             gl_FragColor = vec4(0.0,0.0,0.0,0.0);
         } else
@@ -257,4 +263,3 @@ void main()	{
 
 
 }
-
