@@ -148,7 +148,7 @@ void main()	{
             }
 	} else {
 	    //not border view, so draw the cell we've been sent
-	    cellToDrawIndex = (int(numCallerRows) * int(currentCell.y)) + int(currentCell.x);
+	    cellToDrawIndex = (int(inputGridCount.x) * int(inputGridCount.y - currentCell.y)) + int(inputGridCount.x - currentCell.x - 1.0);
 	}
         //Exclude the cell index specified(Adds 1 to the cell index)
         if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell){
