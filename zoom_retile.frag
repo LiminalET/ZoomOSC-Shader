@@ -8,7 +8,7 @@
 // ISADORA_INT_PARAM(numCallerRows, Pbrd, 0, 10, 0, "The number of rows in the zoom gallery (leave at 0 to automatically calculate)")
 // ISADORA_INT_PARAM(numCallerColumns, f]c], 0, 10, 0, "The number of cols in the gallery (leave at 0 to automatically calculate)")
 // ISADORA_FLOAT_PARAM(galleryCount, x#+O, 0, 50, 0, "The number of video cells in the gallery")
-// ISADORA_INT_PARAM(borderLayers, [ux>, 0, 100, 1, "border gallery rows (0 as normal grid)")
+// ISADORA_INT_PARAM(borderLayers, [ux>, 0, 100, 2, "border gallery rows (0 as normal grid)")
 // ISADORA_INT_PARAM(outputOffset,-j7g, 0, 100, 0, "Output cell offset")
 // ISADORA_INT_PARAM(outputGridWidth, -i-#, 0, 20, 8, "How many columns in the output grid")
 // ISADORA_INT_PARAM(outputGridHeight, q*1T, 0, 20, 4, "How many rows in the output grid")
@@ -131,27 +131,34 @@ void main()	{
         { //am only drawing one cell
             cellToDrawIndex = int(specifyCell);
         } else if (borderLayers > 0)
-		{
-	    	if (currentCell.y == 0.0) //bottom row, 
-            {
-                //draw bottom row second after top row
-                cellToDrawIndex = int ((outputGridCount.x  + currentCell.x));
-            } else if (currentCell.y < outputGridCount.y - 1.0)
+		{ //am using border view so work out which cell..
+	    	if (currentCell.y < float(borderLayers)) //bottom rows, 
+            {  //bottom row, first work out out how many were in the bottom rows
+                int topRows = borderLayers * int(outputGridCount.x);
+                //then work out from top down how many we've had above 
+                int aboveUs = int((currentCell.y) * outputGridCount.x);
+                cellToDrawIndex = aboveUs + int(currentCell.x) + topRows;
+            } else if (currentCell.y < (outputGridCount.y - float(borderLayers)))
             { //a mid-row, if above zero then add one (will be on right)
-                //draw sides last
                 //cell should be the bottom row of cells, plus 2*the
-                cellToDrawIndex = int((((outputGridCount.y - currentCell.y) - 1.0) * 2.0) + (2.0 * outputGridCount.x)  - 2.0);
+                
+                int topBottomRows = (borderLayers * int(outputGridCount.x)) * 2;
+                int aboveUs = (int(currentCell.y) - borderLayers) * (borderLayers * 2);
+                
+                
+                cellToDrawIndex = topBottomRows + aboveUs + int(currentCell.x);
+                
 
-                if (currentCell.x > 0.0)
-                    cellToDrawIndex += 1;
+                if (currentCell.x > float(borderLayers)) //right hand side
+                    cellToDrawIndex -= int(outputGridCount.x) - (borderLayers * 2);
 
             } else
-            { //top row
-                cellToDrawIndex = int(currentCell.x);
+            { //top rows
+                cellToDrawIndex = int(currentCell.x + ((outputGridCount.y - currentCell.y - 1.0) * (outputGridCount.x) ));
             }
 	} else {
 	    //not border view, so draw the cell we've been sent
-	    cellToDrawIndex = int(currentCell.x) + int(((outputGridCount.y - currentCell.y - 1.0) *outputGridCount.x));//(int(inputGridCount.x) * int(inputGridCount.y - currentCell.y)) + int(inputGridCount.x - currentCell.x /*- 1.0*/);
+	    cellToDrawIndex = int(currentCell.x) + int(((outputGridCount.y - currentCell.y - 1.0) *outputGridCount.x));
 	}
         //Exclude the cell index specified(Adds 1 to the cell index)
         if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell)
@@ -163,7 +170,7 @@ void main()	{
         	cellToDrawIndex -= outputOffset;
         } 
 
-        if ((cellToDrawIndex > int(galleryCount)) || cellToDrawIndex < 0) //int(numberOfInputGridSegments/* - 1.0*/)) || cellToDrawIndex < outputOffset)
+        if ((cellToDrawIndex > int(galleryCount - 1.0)) || cellToDrawIndex < 0) //int(numberOfInputGridSegments/* - 1.0*/)) || cellToDrawIndex < outputOffset)
         { //don't have enough cells to draw..
             gl_FragColor = vec4(0.0,0.0,0.0,0.0);
         } else
