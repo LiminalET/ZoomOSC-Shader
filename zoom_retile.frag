@@ -8,7 +8,7 @@
 // ISADORA_INT_PARAM(numCallerRows, Pbrd, 0, 10, 0, "The number of rows in the zoom gallery (leave at 0 to automatically calculate)")
 // ISADORA_INT_PARAM(numCallerColumns, f]c], 0, 10, 0, "The number of cols in the gallery (leave at 0 to automatically calculate)")
 // ISADORA_FLOAT_PARAM(galleryCount, x#+O, 0, 50, 0, "The number of video cells in the gallery")
-// ISADORA_INT_PARAM_ONOFF(borderView, [ux>, 0, "Use border gallery")
+// ISADORA_INT_PARAM(borderLayers, [ux>, 0, 100, 1, "border gallery rows (0 as normal grid)")
 // ISADORA_INT_PARAM(outputOffset,-j7g, 0, 100, 0, "Output cell offset")
 // ISADORA_INT_PARAM(outputGridWidth, -i-#, 0, 20, 8, "How many columns in the output grid")
 // ISADORA_INT_PARAM(outputGridHeight, q*1T, 0, 20, 4, "How many rows in the output grid")
@@ -25,7 +25,7 @@
 uniform sampler2D tex0;
 uniform bool dispInputArea;
 uniform bool dispCellArea;
-uniform bool borderView;
+uniform int borderLayers;
 uniform int numCallerRows;
 uniform int numCallerColumns;
 uniform float galleryCount;
@@ -109,13 +109,14 @@ void main()	{
     vec2 currentCell = floor(gl_TexCoord[0].xy/sizeOfOutputRectCell);
 
     bool drawOutputCell = true;
-    if (borderView)
+    if (borderLayers > 0)
     { //only want to display around edges of screen..
     //check if we are drawing a cell we want (on the outer edges of the frame
-    	if (currentCell.x > 0.0 && currentCell.x < (outputGridCount.x - 1.0) && (currentCell.y > 0.0) && currentCell.y < (outputGridCount.y - 1.0)) {
+    	//if (true) {
+    	if (currentCell.x > float(borderLayers - 1) && currentCell.x < (outputGridCount.x - float(borderLayers)) && (currentCell.y > float(borderLayers - 1)) && currentCell.y < (outputGridCount.y - float(borderLayers))) {
         //we are not.. just draw black (we are in middle of screen)
             gl_FragColor=vec4(0.0,0.0,0.0,0.0);
-	    drawOutputCell = false;
+	    	drawOutputCell = false;
 	    
         }
     }
@@ -129,9 +130,9 @@ void main()	{
         if (specifyCell >= 0.0)
         { //am only drawing one cell
             cellToDrawIndex = int(specifyCell);
-        } else if (borderView)
-	{
-	    if (currentCell.y == 0.0) //bottom row, 
+        } else if (borderLayers > 0)
+		{
+	    	if (currentCell.y == 0.0) //bottom row, 
             {
                 //draw bottom row second after top row
                 cellToDrawIndex = int ((outputGridCount.x  + currentCell.x));
