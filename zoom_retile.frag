@@ -160,15 +160,17 @@ void main()	{
 	    //not border view, so draw the cell we've been sent
 	    cellToDrawIndex = int(currentCell.x) + int(((outputGridCount.y - currentCell.y - 1.0) *outputGridCount.x));
 	}
-        //Exclude the cell index specified(Adds 1 to the cell index)
-        if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell)
-        {
-            cellToDrawIndex += 1;
-        }
+        
         if (outputOffset > 0)
         {
         	cellToDrawIndex -= outputOffset;
         } 
+	
+	//Exclude the cell index specified(Adds 1 to the cell index)
+        if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell)
+        {
+            cellToDrawIndex += 1;
+        }
 
         if ((cellToDrawIndex > int(galleryCount - 1.0)) || cellToDrawIndex < 0) //int(numberOfInputGridSegments/* - 1.0*/)) || cellToDrawIndex < outputOffset)
         { //don't have enough cells to draw..
