@@ -8,8 +8,10 @@
 // ISADORA_INT_PARAM(numCallerRows, Pbrd, 0, 10, 0, "The number of rows in the zoom gallery (leave at 0 to automatically calculate)")
 // ISADORA_INT_PARAM(numCallerColumns, f]c], 0, 10, 0, "The number of cols in the gallery (leave at 0 to automatically calculate)")
 // ISADORA_FLOAT_PARAM(galleryCount, x#+O, 0, 50, 0, "The number of video cells in the gallery")
-// ISADORA_INT_PARAM(outputGridWidth, -i-#, 0, 9, 8, "How many columns in the output grid")
-// ISADORA_INT_PARAM(outputGridHeight, q*1T, 0, 9, 4, "How many rows in the output grid")
+// ISADORA_INT_PARAM(borderLayers, [ux>, 0, 100, 2, "border gallery rows (0 as normal grid)")
+// ISADORA_INT_PARAM(outputOffset,-j7g, 0, 100, 0, "Output cell offset")
+// ISADORA_INT_PARAM(outputGridWidth, -i-#, 0, 20, 8, "How many columns in the output grid")
+// ISADORA_INT_PARAM(outputGridHeight, q*1T, 0, 20, 4, "How many rows in the output grid")
 // ISADORA_FLOAT_PARAM(specifyCell, $~#v, -1, 50, -1, "Specify a specific cell to capture (-1 to capture all)")
 // ISADORA_FLOAT_PARAM(excludeCell, &v/z, -1, 50, -1, "Specify a specific cell to exclude in the gallery (-1 to ignore)")
 // ISADORA_FLOAT_PARAM(userMasterScale_x, 3*FT, 0, 100, 100, "The Width of the input image to capture")
@@ -23,9 +25,11 @@
 uniform sampler2D tex0;
 uniform bool dispInputArea;
 uniform bool dispCellArea;
+uniform int borderLayers;
 uniform int numCallerRows;
 uniform int numCallerColumns;
 uniform float galleryCount;
+uniform int outputOffset;
 uniform int outputGridWidth;
 uniform int outputGridHeight;
 uniform float specifyCell;
@@ -98,58 +102,77 @@ void main()	{
 
     //output values - number of cells for output, includes the gap in the middle..
     vec2 outputGridCount = vec2(float(outputGridWidth),float(outputGridHeight));
-    // vec2 sizeOfOutputRect=vec2(.25,.25);
 
     vec2 sizeOfOutputRectCell = vec2(1.0/outputGridCount.x,(1.0/outputGridCount.y));
     float numberOfOutputGridSegments=outputGridCount.x*outputGridCount.y;
 
-    //position of frag in grid and rectangle (destination)
     vec2 currentCell = floor(gl_TexCoord[0].xy/sizeOfOutputRectCell);
 
+    bool drawOutputCell = true;
+    if (borderLayers > 0)
+    { //only want to display around edges of screen..
     //check if we are drawing a cell we want (on the outer edges of the frame
-    if (currentCell.x > 0.0 && currentCell.x < (outputGridCount.x - 1.0) && (currentCell.y > 0.0) && currentCell.y < (outputGridCount.y - 1.0)) {
+    	//if (true) {
+    	if (currentCell.x > float(borderLayers - 1) && currentCell.x < (outputGridCount.x - float(borderLayers)) && (currentCell.y > float(borderLayers - 1)) && currentCell.y < (outputGridCount.y - float(borderLayers))) {
         //we are not.. just draw black (we are in middle of screen)
-        gl_FragColor=vec4(0.0,0.0,0.0,0.0);
-
-    } else
+            gl_FragColor=vec4(0.0,0.0,0.0,0.0);
+	    	drawOutputCell = false;
+	    
+        }
+    }
+    
+    if (drawOutputCell)
     {
-        //work out the index of the cell we want to draw,
+        //work out the index of the input cell we want to draw,
         int cellToDrawIndex;
         float rowOffset = 0.0;
         
         if (specifyCell >= 0.0)
         { //am only drawing one cell
             cellToDrawIndex = int(specifyCell);
-        } else if (currentCell.y == 0.0) //bottom row, 
+        } else if (borderLayers > 0)
+		{ //am using border view so work out which cell..
+	    	if (currentCell.y < float(borderLayers)) //bottom rows, 
+            {  //bottom row, first work out out how many were in the bottom rows
+                int topRows = borderLayers * int(outputGridCount.x);
+                //then work out from top down how many we've had above 
+                int aboveUs = int((currentCell.y) * outputGridCount.x);
+                cellToDrawIndex = aboveUs + int(currentCell.x) + topRows;
+            } else if (currentCell.y < (outputGridCount.y - float(borderLayers)))
+            { //a mid-row, if above zero then add one (will be on right)
+                //cell should be the bottom row of cells, plus 2*the
+                
+                int topBottomRows = (borderLayers * int(outputGridCount.x)) * 2;
+                int aboveUs = (int(currentCell.y) - borderLayers) * (borderLayers * 2);
+                
+                
+                cellToDrawIndex = topBottomRows + aboveUs + int(currentCell.x);
+                
+
+                if (currentCell.x > float(borderLayers)) //right hand side
+                    cellToDrawIndex -= int(outputGridCount.x) - (borderLayers * 2);
+
+            } else
+            { //top rows
+                cellToDrawIndex = int(currentCell.x + ((outputGridCount.y - currentCell.y - 1.0) * (outputGridCount.x) ));
+            }
+	} else {
+	    //not border view, so draw the cell we've been sent
+	    cellToDrawIndex = int(currentCell.x) + int(((outputGridCount.y - currentCell.y - 1.0) *outputGridCount.x));
+	}
+        
+        if (outputOffset > 0)
         {
-            //width of the grid + 2x height of the grid
-            //draw bottom row second after top row
-            cellToDrawIndex = int ((outputGridCount.x  + currentCell.x)) ;
-
-
-            
-        } else if (currentCell.y < outputGridCount.y - 1.0)
-        { //a mid-row, if above zero then add one (will be on right)
-            //draw sides last
-            //cell should be the bottom row of cells, plus 2*the
-            //cellToDrawIndex = int((((outputGridCount.y - currentCell.y) - 1.0) * 2.0) + outputGridCount.x  - 2.0);
-            cellToDrawIndex = int((((outputGridCount.y - currentCell.y) - 1.0) * 2.0) + (2.0 * outputGridCount.x)  - 2.0);
-
-
-            if (currentCell.x > 0.0)
-                cellToDrawIndex += 1;
-
-            //cellToDrawIndex = cellX;
-        } else
-        { //top row
-            cellToDrawIndex = int(currentCell.x);// ((currentCell.y - 1.0) * inputGridCount.x);
-        }
-        //Exclude the cell index specified(Adds 1 to the cell index)
-        if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell){
+        	cellToDrawIndex -= outputOffset;
+        } 
+	
+	//Exclude the cell index specified(Adds 1 to the cell index)
+        if(excludeCell!=-1.0 && float(cellToDrawIndex) >= excludeCell)
+        {
             cellToDrawIndex += 1;
         }
 
-        if (cellToDrawIndex > int(numberOfInputGridSegments - 1.0))
+        if ((cellToDrawIndex > int(galleryCount - 1.0)) || cellToDrawIndex < 0) //int(numberOfInputGridSegments/* - 1.0*/)) || cellToDrawIndex < outputOffset)
         { //don't have enough cells to draw..
             gl_FragColor = vec4(0.0,0.0,0.0,0.0);
         } else
@@ -224,13 +247,6 @@ void main()	{
 
 
 
-    // if(posInInRect.y>inputRectCoords.y){
-    // 	gl_FragColor=vec4(0.0,1.0,0.0,1.0);
-    // }
-
-
-
-
     //TESTING OPTIONS
     //show input Area
     if(dispInputArea){
@@ -251,4 +267,3 @@ void main()	{
 
 
 }
-
