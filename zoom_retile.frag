@@ -19,6 +19,215 @@
 // ISADORA_FLOAT_PARAM(userMasterOffset_x, ECde, -100, 100, 0, "The x offset of the input image to capture")
 // ISADORA_FLOAT_PARAM(userMasterOffset_y, veuD, -100, 100, 0, "The y offset of the input image to capture")
 
+
+/*
+{
+  "CATEGORIES" : [
+    "Geometry Adjustment",
+    "Utility"
+  ],
+  "DESCRIPTION" : "",
+  "INPUTS" : [
+    {
+      "NAME" : "inputImage",
+      "TYPE" : "image"
+    },
+    {
+      "DEFAULT" : false,
+      "NAME" : "dispInputArea",
+      "TYPE" : "bool"
+    },
+    {
+      "DEFAULT" : false,
+      "NAME" : "dispCellArea",
+      "TYPE" : "bool"
+    },
+    {
+      "LABELS" : [
+        "auto",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "NAME" : "numCallerRows",
+      "TYPE" : "long",
+      "DEFAULT" : 4,
+      "VALUES" : [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "LABELS" : [
+        "auto",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "NAME" : "numCallerColumns",
+      "TYPE" : "long",
+      "DEFAULT" : 5,
+      "VALUES" : [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+    	"NAME" : "borderLayers",
+    	"TYPE" : "long",
+    	"DEFAULT" : 1,
+    	"MIN" : 1,
+    	"MAX" : 50	
+    },
+    {
+      "MAX" : 50,
+      "NAME" : "galleryCount",
+      "TYPE" : "float",
+      "DEFAULT" : 0,
+      "MIN" : 0
+    },
+    {
+    	"NAME" : "outputOffset",
+    	"TYPE" : "long",
+    	"DEFAULT" : 0,
+    	"MIN" : 0,
+    	"MAX" : 100	
+    },
+    {
+      "LABELS" : [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "NAME" : "outputGridWidth",
+      "TYPE" : "long",
+      "DEFAULT" : 8,
+      "VALUES" : [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "LABELS" : [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "NAME" : "outputGridHeight",
+      "TYPE" : "long",
+      "DEFAULT" : 4,
+      "VALUES" : [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "MAX" : 50,
+      "NAME" : "specifyCell",
+      "TYPE" : "float",
+      "DEFAULT" : -1,
+      "MIN" : -1
+    },
+    {
+      "MAX" : 50,
+      "NAME" : "excludeCell",
+      "TYPE" : "float",
+      "DEFAULT" : -1,
+      "MIN" : -1
+    },
+    {
+      "NAME" : "userMasterScale",
+      "TYPE" : "point2D",
+      "MAX" : [
+        100,
+        100
+      ],
+      "MIN" : [
+        0,
+        0
+      ]
+    },
+    {
+      "NAME" : "userMasterOffset",
+      "TYPE" : "point2D",
+      "MIN" : [-100, -100],
+      "MAX": [100, 100]
+ 
+    },
+    {
+        "NAME": "testF",
+        "TYPE": "float"
+    }
+  ],
+  "ISFVSN" : "2",
+  "CREDIT" : "Ash has a whippet"
+}
+*/
+
+
+#ifdef tex0
 #define userMasterScale vec2(userMasterScale_x,userMasterScale_y)
 #define userMasterOffset vec2(userMasterOffset_x,userMasterOffset_y)
 
@@ -40,6 +249,8 @@ uniform float userMasterOffset_x;
 uniform float userMasterOffset_y;
 uniform vec2 resolution_tex0;
 uniform vec2 resolution;
+#else
+#endif
 
 void main()	{
     
@@ -71,7 +282,9 @@ void main()	{
 
     float numberOfInputGridSegments=inputGridCount.x*inputGridCount.y;
 
-
+	#ifndef GL_ES
+	vec2 resolution_tex0 = IMG_SIZE(inputImage);
+	#endif
     
     //convert to pixel sizes to do the maths
     vec2 sizeOfInputArea = resolution_tex0 * masterScale;
@@ -105,8 +318,12 @@ void main()	{
 
     vec2 sizeOfOutputRectCell = vec2(1.0/outputGridCount.x,(1.0/outputGridCount.y));
     float numberOfOutputGridSegments=outputGridCount.x*outputGridCount.y;
-
-    vec2 currentCell = floor(gl_TexCoord[0].xy/sizeOfOutputRectCell);
+	
+	#ifdef GL_ES
+    	vec2 currentCell = floor(gl_TexCoord[0].xy/sizeOfOutputRectCell);
+    #else
+    	vec2 currentCell = floor(isf_FragNormCoord/sizeOfOutputRectCell);
+    #endif
 
     bool drawOutputCell = true;
     if (borderLayers > 0)
@@ -219,10 +436,20 @@ void main()	{
             if(dispCellArea){
                 if((gl_TexCoord[0].xy.x > inputRectCoords.x  && gl_TexCoord[0].xy.y > inputRectCoords.y ) && (gl_TexCoord[0].xy.x < (inputRectCoords.x + sizeOfInputRectCell.x) && gl_TexCoord[0].xy.y < (inputRectCoords.y + sizeOfInputRectCell.y)))
                 {
-                    gl_FragColor=texture2D(tex0, gl_TexCoord[0].xy) * vec4(1.0,1.0,1.0,1.0) + vec4(1.0, 1.0, 1.0, 1.0) ;
+                	#ifdef GL_ES
+                    	gl_FragColor=texture2D(tex0, gl_TexCoord[0].xy) * vec4(1.0,1.0,1.0,1.0) + vec4(1.0, 1.0, 1.0, 1.0) ;
+                    #else
+                    	gl_FragColor=IMG_NORM_PIXEL(inputImage,isf_FragNormCoord) * vec4(1.0,1.0,1.0,1.0) + vec4(1.0, 1.0, 1.0, 1.0) ;
+                    #endif
+
                 } else
                 {
-                    gl_FragColor=texture2D(tex0, gl_TexCoord[0].xy);
+					#ifdef GL_ES
+						gl_FragColor=texture2D(tex0, gl_TexCoord[0].xy);
+					#else
+						gl_FragColor=IMG_NORM_PIXEL(inputImage,isf_FragNormCoord);
+					#endif
+
         
                 }
 
@@ -232,11 +459,20 @@ void main()	{
 
                 //work out the scale factor for the cell
                 vec2 scale = sizeOfInputRectCell/sizeOfOutputRectCell;
-                vec2 posInCell = mod(gl_TexCoord[0].xy,sizeOfOutputRectCell);
-
+                #ifdef GL_ES
+                	vec2 posInCell = mod(gl_TexCoord[0].xy,sizeOfOutputRectCell);
+				#else 
+					vec2 posInCell = mod(isf_FragNormCoord,sizeOfOutputRectCell);
+				#endif
+				
                 vec2 pixToGrab = (posInCell * scale) + inputRectCoords; // inputAreaSize + inputAreaBL;
               
-                gl_FragColor=texture2D(tex0, pixToGrab);
+              	#ifdef GL_ES
+                	gl_FragColor=texture2D(tex0, pixToGrab);
+                #else
+					gl_FragColor=IMG_NORM_PIXEL(inputImage, pixToGrab);
+				#endif
+
             }
         }
 
@@ -250,8 +486,8 @@ void main()	{
     //TESTING OPTIONS
     //show input Area
     if(dispInputArea){
-        
-        if((gl_TexCoord[0].xy.x > masterOffset.x && gl_TexCoord[0].xy.y > masterOffset.y) && (gl_TexCoord[0].xy.x < (masterOffset.x + masterScale.x) && gl_TexCoord[0].xy.y < (masterOffset.y + masterScale.y)))
+        #ifdef GL_ES
+        	if((gl_TexCoord[0].xy.x > masterOffset.x && gl_TexCoord[0].xy.y > masterOffset.y) && (gl_TexCoord[0].xy.x < (masterOffset.x + masterScale.x) && gl_TexCoord[0].xy.y < (masterOffset.y + masterScale.y)))
                 {
                     gl_FragColor=texture2D(tex0, gl_TexCoord[0].xy) * vec4(0.0,1.0,1.0,0.5) + vec4(1.0, 0.0, 0.0, 1.0) ;
                 } else
@@ -259,6 +495,16 @@ void main()	{
                     gl_FragColor=texture2D(tex0, gl_TexCoord[0].xy);
         
                 }
+        #else
+                if((isf_FragNormCoord.x > masterOffset.x && isf_FragNormCoord.y > masterOffset.y) && (isf_FragNormCoord.x < (masterOffset.x + masterScale.x) && isf_FragNormCoord.y < (masterOffset.y + masterScale.y)))
+                {
+                    gl_FragColor=IMG_NORM_PIXEL(inputImage,isf_FragNormCoord) * vec4(0.0,1.0,1.0,0.5) + vec4(1.0, 0.0, 0.0, 1.0) ;
+                } else
+                {
+                    gl_FragColor=IMG_NORM_PIXEL(inputImage,isf_FragNormCoord);
+        
+                }
+        #endif
 
     }
     
