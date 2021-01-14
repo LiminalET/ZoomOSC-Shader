@@ -227,7 +227,7 @@
 */
 
 
-#ifdef tex0
+#ifdef GL_ES
 #define userMasterScale vec2(userMasterScale_x,userMasterScale_y)
 #define userMasterOffset vec2(userMasterOffset_x,userMasterOffset_y)
 
